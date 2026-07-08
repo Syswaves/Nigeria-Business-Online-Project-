@@ -1,0 +1,6 @@
+{
+  "name": "Nigeria Business Online Project",
+  "description": "Promoting trust, growth and visibility for Nigerian Businesses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
