@@ -1,9 +1,14 @@
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function TheProject() {
   return (
     <div className="flex flex-col">
+      <Helmet>
+        <title>About The Project | Nigeria Business Online</title>
+        <meta name="description" content="The Nigeria Business Online Project is a comprehensive business profiling platform designed to showcase businesses, companies, and organizations across Nigeria to the world." />
+      </Helmet>
       {/* About The Project Section */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +43,7 @@ export default function TheProject() {
               
               <div className="relative z-10">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Find a Business</h3>
-                <p className="text-gray-600 mb-6">Search our directory of verified Nigerian businesses by name, category, or location.</p>
+                <p className="text-gray-600 mb-6">Search our platform of verified Nigerian businesses by name, category, or location.</p>
                 
                 <form 
                   onSubmit={(e) => {

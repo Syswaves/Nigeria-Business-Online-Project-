@@ -1,29 +1,69 @@
 import { Upload, Mail, Briefcase, MapPin, Phone, Hash, CheckCircle, ArrowRight } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 export default function AddBusiness() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  const initialFormState = {
+    name: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", services: "",
+    phone: "", location: "", email: "", website: "", whatsapp: "",
+    facebookUrl: "", instagramUrl: "", twitterUrl: "", linkedinUrl: "",
+    promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "",
+    verified: false
+  };
+  const [formData, setFormData] = useState(initialFormState);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, [fieldName]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission delay
-    setTimeout(() => {
+    fetch("/api/businesses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData)
+    })
+    .then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to submit business");
+      }
+      return res.json();
+    })
+    .then(() => {
       setIsSubmitting(false);
       setSubmitSuccess(true);
       window.scrollTo(0, 0);
-    }, 1500);
-
-    // In a real app, this would submit via an API that sends an email to:
-    // businessprofiling@nigeriabusinessonline.com
+    })
+    .catch(err => {
+      console.error(err);
+      setIsSubmitting(false);
+    });
   };
 
   if (submitSuccess) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24">
+        <Helmet>
+          <title>Success | Add Your Business | Nigeria Business Online</title>
+        </Helmet>
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center">
           <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
             <CheckCircle size={48} strokeWidth={1.5} />
@@ -47,7 +87,7 @@ export default function AddBusiness() {
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">3</div>
-                <p>Once approved, your business will be published to the public directory with a "Verified" badge.</p>
+                <p>Once approved, your business will be published to the public platform with a "Verified" badge.</p>
               </li>
             </ul>
           </div>
@@ -73,6 +113,10 @@ export default function AddBusiness() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <Helmet>
+        <title>Add Your Business | Nigeria Business Online</title>
+        <meta name="description" content="Add your business to Nigeria Business Online platform. Create a profile and get verified to increase your visibility." />
+      </Helmet>
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Add Your Business</h1>
         <p className="text-lg text-gray-600">
@@ -93,33 +137,63 @@ export default function AddBusiness() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Business / Company / Organisation Name *</label>
-                <input required type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Zenith Tech Solutions Ltd" />
+                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Zenith Tech Solutions Ltd" />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number *</label>
-                <input required type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. RC123456" />
+                <input required type="text" name="rcNumber" value={formData.rcNumber} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. RC123456" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category / Type of Business *</label>
-                <select required className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none bg-white">
+                <select required name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none bg-white">
                   <option value="">Select Category</option>
                   <option value="Agriculture">Agriculture & Agro-Allied</option>
-                  <option value="Technology">Technology & Software</option>
-                  <option value="Logistics">Logistics & Transportation</option>
-                  <option value="Manufacturing">Manufacturing</option>
+                  <option value="Arts & Crafts">Arts & Crafts</option>
+                  <option value="Automotive">Automotive & Repair</option>
+                  <option value="Aviation">Aviation</option>
+                  <option value="Beauty">Beauty & Personal Care</option>
+                  <option value="Engineering and Construction">Engineering and Construction</option>
+                  <option value="E-Commerce">E-Commerce</option>
+                  <option value="Education">Education & Training</option>
+                  <option value="Energy and Power">Energy and Power</option>
+                  <option value="Entertainment">Entertainment & Media</option>
+                  <option value="Environmental">Environmental Services</option>
+                  <option value="Event Management">Event Management Services</option>
+                  <option value="Fashion">Fashion & Apparel</option>
+                  <option value="Finance">Financial Services</option>
+                  <option value="Food & Beverage">Food & Beverage</option>
+                  <option value="Government">Government & Public Services</option>
+                  <option value="Healthcare">Healthcare & Pharmaceuticals</option>
+                  <option value="Home & Property">Home & Property Services</option>
+                  <option value="Hospitality">Hospitality & Tourism</option>
+                  <option value="Industrial">Industrial Services</option>
+                  <option value="Legal">Legal Services</option>
+                  <option value="Logistics">Logistics</option>
+                  <option value="Manufacturing">Manufacturing & Production</option>
+                  <option value="Marine & Shipping">Marine & Shipping</option>
+                  <option value="Marketing">Marketing & Advertising</option>
+                  <option value="Media & Entertainment">Media & Entertainment</option>
+                  <option value="Mining">Mining & Solid Minerals</option>
+                  <option value="Non-Profit">Non-Profit & NGO</option>
+                  <option value="Oil and Gas">Oil and Gas</option>
+                  <option value="Printing and Publishing">Printing and Publishing</option>
+                  <option value="Professional Services">Professional Services</option>
+                  <option value="Real Estate">Real Estate</option>
                   <option value="Retail">Retail & E-commerce</option>
-                  <option value="Services">Professional Services</option>
-                  <option value="Healthcare">Healthcare</option>
-                  <option value="Education">Education</option>
+                  <option value="Security Services">Security Services</option>
+                  <option value="Sports & Fitness">Sports & Fitness</option>
+                  <option value="Technology">Technology & Software</option>
+                  <option value="Telecommunications">Telecommunications</option>
+                  <option value="Transportation & Logistics">Transportation & Logistics</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Services Rendered *</label>
-                <textarea required rows={4} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none resize-none" placeholder="Briefly describe the products or services your company offers..."></textarea>
+                <textarea required name="services" value={formData.services} onChange={handleChange} rows={4} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none resize-none" placeholder="Briefly describe the products or services your company offers..."></textarea>
               </div>
             </div>
           </div>
@@ -132,27 +206,27 @@ export default function AddBusiness() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number(s) *</label>
-                <input required type="tel" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. 08012345678, 07087654321" />
+                <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. 08012345678, 07087654321" />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                <input required type="email" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="contact@company.com" />
+                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="contact@company.com" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp Number (Optional)</label>
-                <input type="tel" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. 2348012345678" />
+                <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. 2348012345678" />
               </div>
 
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Location / Address(es) *</label>
-                <input required type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="Full office address" />
+                <input required type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="Full office address" />
               </div>
 
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Website (Optional)</label>
-                <input type="url" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="https://www.yourcompany.com" />
+                <input type="url" name="website" value={formData.website} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="https://www.yourcompany.com" />
               </div>
             </div>
           </div>
@@ -165,27 +239,27 @@ export default function AddBusiness() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Facebook Handle (Optional)</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
+                <input type="text" name="facebookUrl" value={formData.facebookUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Instagram Handle (Optional)</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
+                <input type="text" name="instagramUrl" value={formData.instagramUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">X (Twitter) Handle (Optional)</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
+                <input type="text" name="twitterUrl" value={formData.twitterUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. @yourcompany" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">YouTube Channel (Optional)</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Your Company Channel" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn URL (Optional)</label>
+                <input type="text" name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Your Company LinkedIn" />
               </div>
 
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Promotional Video URL (Optional)</label>
-                <input type="url" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. https://youtube.com/watch?v=..." />
+                <input type="url" name="promoVideoUrl" value={formData.promoVideoUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. https://youtube.com/watch?v=..." />
               </div>
             </div>
           </div>
@@ -201,35 +275,40 @@ export default function AddBusiness() {
                 <Upload className="mx-auto text-gray-400 mb-3" size={24} />
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company Logo *</label>
                 <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 2MB)</p>
-                <input required type="file" accept="image/*" className="text-sm text-gray-500 w-full" />
+                <input required type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'logoUrl')} className="text-sm text-gray-500 w-full" />
+                {formData.logoUrl && <span className="text-xs text-green-600 mt-2 block">Logo selected</span>}
               </div>
 
               <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
                 <Upload className="mx-auto text-gray-400 mb-3" size={24} />
                 <label className="block text-sm font-medium text-gray-700 mb-1">Certificate of Incorporation (Optional)</label>
                 <p className="text-xs text-gray-500 mb-3">JPG, PDF (Max 5MB)</p>
-                <input type="file" accept=".pdf,image/*" className="text-sm text-gray-500 w-full" />
+                <input type="file" accept=".pdf,image/*" onChange={(e) => handleFileChange(e, 'certificateOfIncorporationUrl')} className="text-sm text-gray-500 w-full" />
+                {formData.certificateOfIncorporationUrl && <span className="text-xs text-green-600 mt-2 block">Certificate selected</span>}
               </div>
 
               <div className="col-span-1 md:col-span-2 border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
                 <Upload className="mx-auto text-gray-400 mb-3" size={24} />
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company Profile (Optional)</label>
                 <p className="text-xs text-gray-500 mb-3">PDF or WORD FORMAT (Max 10MB)</p>
-                <input type="file" accept=".pdf,.doc,.docx" className="text-sm text-gray-500 w-full" />
+                <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileChange(e, 'companyProfileUrl')} className="text-sm text-gray-500 w-full" />
+                {formData.companyProfileUrl && <span className="text-xs text-green-600 mt-2 block">Profile selected</span>}
               </div>
 
               <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
                 <Upload className="mx-auto text-gray-400 mb-3" size={24} />
                 <label className="block text-sm font-medium text-gray-700 mb-1">Promotional Photo 1 (Optional)</label>
                 <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
-                <input type="file" accept="image/*" className="text-sm text-gray-500 w-full" />
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto1Url')} className="text-sm text-gray-500 w-full" />
+                {formData.promoPhoto1Url && <span className="text-xs text-green-600 mt-2 block">Photo 1 selected</span>}
               </div>
 
               <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
                 <Upload className="mx-auto text-gray-400 mb-3" size={24} />
                 <label className="block text-sm font-medium text-gray-700 mb-1">Promotional Photo 2 (Optional)</label>
                 <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
-                <input type="file" accept="image/*" className="text-sm text-gray-500 w-full" />
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto2Url')} className="text-sm text-gray-500 w-full" />
+                {formData.promoPhoto2Url && <span className="text-xs text-green-600 mt-2 block">Photo 2 selected</span>}
               </div>
             </div>
           </div>

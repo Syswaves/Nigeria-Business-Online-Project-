@@ -2,6 +2,8 @@ export interface Business {
   id: string;
   name: string;
   logoUrl?: string;
+  certificateOfIncorporationUrl?: string;
+  companyProfileUrl?: string;
   rcNumber: string;
   category: string;
   services: string;
@@ -12,8 +14,8 @@ export interface Business {
   whatsapp?: string;
   facebookUrl?: string;
   instagramUrl?: string;
-  xUrl?: string;
-  youtubeUrl?: string;
+  twitterUrl?: string;
+  linkedinUrl?: string;
   promoVideoUrl?: string;
   promoPhoto1Url?: string;
   promoPhoto2Url?: string;

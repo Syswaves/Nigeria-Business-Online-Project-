@@ -14,21 +14,25 @@ import TheProject from "./pages/TheProject";
 import ContactUs from "./pages/ContactUs";
 import Payment from "./pages/Payment";
 
+import { HelmetProvider } from "react-helmet-async";
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="project" element={<TheProject />} />
-          <Route path="contact" element={<ContactUs />} />
-          <Route path="add-business" element={<AddBusiness />} />
-          <Route path="business/:id" element={<BusinessProfile />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="search" element={<SearchResults />} />
-          <Route path="payment" element={<Payment />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="project" element={<TheProject />} />
+            <Route path="contact" element={<ContactUs />} />
+            <Route path="add-business" element={<AddBusiness />} />
+            <Route path="business/:id" element={<BusinessProfile />} />
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="search" element={<SearchResults />} />
+            <Route path="payment" element={<Payment />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }

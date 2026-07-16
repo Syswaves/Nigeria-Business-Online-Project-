@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MapPin, Search, BadgeCheck } from "lucide-react";
 import type { Business } from "../types";
+import { Helmet } from "react-helmet-async";
 
 export default function SearchResults() {
   const [searchParams] = useSearchParams();
@@ -25,6 +26,10 @@ export default function SearchResults() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Helmet>
+        <title>Search Results {query ? `for "${query}"` : ""} | Nigeria Business Online</title>
+        <meta name="description" content={`Find verified businesses in Nigeria. Search results ${query ? `for ${query}` : ""}.`} />
+      </Helmet>
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Search Results</h1>
         <p className="text-gray-600 text-lg">

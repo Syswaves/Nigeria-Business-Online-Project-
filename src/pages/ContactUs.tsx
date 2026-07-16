@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -20,6 +21,10 @@ export default function ContactUs() {
 
   return (
     <div className="flex flex-col">
+      <Helmet>
+        <title>Contact Us | Nigeria Business Online</title>
+        <meta name="description" content="Have questions or need assistance profiling your business? Contact the Nigeria Business Online team today." />
+      </Helmet>
       {/* Contact Section */}
       <section className="py-20 bg-gray-50 flex-1">
          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">

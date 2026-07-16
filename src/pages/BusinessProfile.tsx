@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Hash, Briefcase, BadgeCheck, MessageCircle } from "lucide-react";
 import type { Business } from "../types";
+import { Helmet } from "react-helmet-async";
 
 export default function BusinessProfile() {
   const { id } = useParams();
@@ -30,6 +31,9 @@ export default function BusinessProfile() {
   if (!business) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
+        <Helmet>
+          <title>Business Not Found | Nigeria Business Online</title>
+        </Helmet>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Business not found</h2>
         <Link to="/" className="text-green-700 font-medium hover:underline">Return to Home</Link>
       </div>
@@ -38,6 +42,10 @@ export default function BusinessProfile() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Helmet>
+        <title>{business.name} | Nigeria Business Online</title>
+        <meta name="description" content={`View the business profile of ${business.name}, categorized under ${business.category}. ${business.services}`} />
+      </Helmet>
       <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-green-700 transition-colors mb-8 font-medium">
         <ArrowLeft size={20} /> Back to Profiles
       </Link>
@@ -117,6 +125,20 @@ export default function BusinessProfile() {
                   </span>
                 </div>
               </div>
+
+              {business.promoVideoUrl && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Promotional Video</h2>
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-gray-100">
+                    <iframe 
+                      src={business.promoVideoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
+                      title="Promotional Video" 
+                      className="w-full h-full border-0" 
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -153,6 +175,64 @@ export default function BusinessProfile() {
                   </li>
                 )}
               </ul>
+
+              {/* Social Media Links */}
+              {(business.facebookUrl || business.instagramUrl || business.twitterUrl || business.linkedinUrl) && (
+                <>
+                  <h3 className="font-bold text-gray-900 mb-6 mt-10 text-lg border-t border-gray-200 pt-6">Social Media</h3>
+                  <ul className="space-y-4">
+                    {business.facebookUrl && (
+                      <li className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600 font-bold">f</div>
+                        <a href={business.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all text-sm font-medium">Facebook</a>
+                      </li>
+                    )}
+                    {business.instagramUrl && (
+                      <li className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0 text-pink-600 font-bold">ig</div>
+                        <a href={business.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline break-all text-sm font-medium">Instagram</a>
+                      </li>
+                    )}
+                    {business.twitterUrl && (
+                      <li className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-800 font-bold">X</div>
+                        <a href={business.twitterUrl} target="_blank" rel="noopener noreferrer" className="text-gray-800 hover:underline break-all text-sm font-medium">X (Twitter)</a>
+                      </li>
+                    )}
+                    {business.linkedinUrl && (
+                      <li className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-700 font-bold">in</div>
+                        <a href={business.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline break-all text-sm font-medium">LinkedIn</a>
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
+
+              {/* Documents */}
+              {(business.companyProfileUrl || business.certificateOfIncorporationUrl) && (
+                <>
+                  <h3 className="font-bold text-gray-900 mb-6 mt-10 text-lg border-t border-gray-200 pt-6">Documents</h3>
+                  <div className="space-y-4">
+                    {business.companyProfileUrl && (
+                      <a href={business.companyProfileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-green-600 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-700 flex-shrink-0">
+                          <Briefcase size={20} />
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">Company Profile</div>
+                      </a>
+                    )}
+                    {business.certificateOfIncorporationUrl && (
+                      <a href={business.certificateOfIncorporationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-green-600 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 flex-shrink-0">
+                          <BadgeCheck size={20} />
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">Certificate of Incorporation</div>
+                      </a>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
           </div>

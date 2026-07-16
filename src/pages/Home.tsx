@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Search, BadgeCheck } from "lucide-react";
 import type { Business } from "../types";
 import { motion } from "motion/react";
+import { Helmet } from "react-helmet-async";
 
 export default function Home() {
   const [latestBusinesses, setLatestBusinesses] = useState<Business[]>([]);
@@ -16,6 +17,11 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
+      <Helmet>
+        <title>Nigeria Business Online | Verified Business Platform</title>
+        <meta name="description" content="Promoting trust, growth and visibility for Nigerian Businesses. Connect with verified businesses and get top-notch products and service delivery on Nigeria's Exclusive Business platform." />
+        <meta name="keywords" content="Nigeria Business, Business Platform, Verified Businesses Nigeria, Business Profiling, Online Business Nigeria" />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative bg-white overflow-hidden border-b border-gray-100">
         <div className="absolute inset-0 bg-green-50/50" />

@@ -1,10 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { CreditCard, CheckCircle, ShieldCheck, ArrowRight } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function Payment() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 sm:py-24">
+      <Helmet>
+        <title>Payment | Nigeria Business Online</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="text-center mb-12">
         <div className="w-20 h-20 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-6">
           <CreditCard size={40} />
