@@ -32,7 +32,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
+                className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
               >
                 NIGERIA BUSINESS <br/>
                 <span className="text-green-700">ONLINE PROJECT</span>
