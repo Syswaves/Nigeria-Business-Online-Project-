@@ -1,29 +1,42 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { Facebook, Instagram, Youtube, Search, Briefcase, Settings } from "lucide-react";
+import { Facebook, Instagram, Youtube, Search, Briefcase, Settings, Menu, X } from "lucide-react";
 import React, { useState } from "react";
 
 export default function Layout() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setIsMobileMenuOpen(false);
     }
   };
+
+  const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group" onClick={closeMenu}>
             <img 
               src="/nigeriabusinessonlineproject-1-96x43.png" 
               alt="Nigeria Business Online Project" 
               className="h-12 w-auto"
             />
           </Link>
+
+          <div className="md:hidden">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-gray-600 hover:text-green-700 hover:bg-gray-100 rounded-md transition-colors focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
 
           <div className="hidden md:flex items-center gap-6">
             <form onSubmit={handleSearch} className="relative w-64">
@@ -66,6 +79,55 @@ export default function Layout() {
             </Link>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 pt-4 pb-6 space-y-4">
+              <form onSubmit={handleSearch} className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search businesses..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </form>
+              
+              <div className="flex flex-col space-y-3">
+                <Link 
+                  to="/" 
+                  className="block text-gray-700 hover:text-green-700 font-medium py-2 transition-colors"
+                  onClick={closeMenu}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/project" 
+                  className="block text-gray-700 hover:text-green-700 font-medium py-2 transition-colors"
+                  onClick={closeMenu}
+                >
+                  The Project
+                </Link>
+                <Link 
+                  to="/contact" 
+                  className="block text-gray-700 hover:text-green-700 font-medium py-2 transition-colors"
+                  onClick={closeMenu}
+                >
+                  Contact Us
+                </Link>
+                <Link 
+                  to="/add-business" 
+                  className="inline-block text-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-sm mt-2"
+                  onClick={closeMenu}
+                >
+                  Add Your Business
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="flex-grow">
