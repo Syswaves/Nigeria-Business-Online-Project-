@@ -1,0 +1,64 @@
+[
+  {
+    "id": "1",
+    "name": "TechNova Solutions",
+    "logoUrl": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop",
+    "rcNumber": "RC123456",
+    "category": "Information Technology",
+    "services": "Software Development, Cloud Hosting, IT Consulting",
+    "phone": "08012345678",
+    "location": "12, Tech Avenue, Victoria Island, Lagos",
+    "email": "contact@technova.com.ng",
+    "website": "https://technova.com.ng",
+    "whatsapp": "2348012345678",
+    "promoPhoto1Url": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&h=400&fit=crop",
+    "verified": true,
+    "createdAt": 1784303690096
+  },
+  {
+    "id": "2",
+    "name": "GreenFields Agro-Allied",
+    "logoUrl": "https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c1b?w=100&h=100&fit=crop",
+    "rcNumber": "RC789012",
+    "category": "Agriculture",
+    "services": "Crop Production, Livestock Farming, Agro-processing",
+    "phone": "08098765432",
+    "location": "Plot 5, Industrial Estate, Kano",
+    "email": "info@greenfields.com.ng",
+    "website": "https://greenfields.com.ng",
+    "verified": false,
+    "createdAt": 1784303740096
+  },
+  {
+    "id": "3",
+    "name": "Zenith Logistics & Supply",
+    "logoUrl": "https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=100&h=100&fit=crop",
+    "rcNumber": "RC345678",
+    "category": "Logistics",
+    "services": "Freight Forwarding, Supply Chain Management, Warehousing",
+    "phone": "07011223344",
+    "location": "2A, Airport Road, Ikeja, Lagos",
+    "email": "support@zenithlogistics.ng",
+    "verified": true,
+    "createdAt": 1784303790096
+  },
+  {
+    "name": "Test Company 123",
+    "category": "Technology",
+    "location": "Lagos",
+    "email": "test@test.com",
+    "phone": "123456",
+    "createdAt": 1784337570448,
+    "id": "818tslh7k"
+  },
+  {
+    "name": "Test Company 123",
+    "category": "Technology",
+    "location": "Lagos",
+    "email": "test@test.com",
+    "phone": "123456",
+    "slug": "test-company-123",
+    "createdAt": 1784337580392,
+    "id": "2hgbeqij7"
+  }
+]

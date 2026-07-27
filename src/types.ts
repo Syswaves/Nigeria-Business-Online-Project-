@@ -1,11 +1,14 @@
 export interface Business {
   id: string;
+  slug?: string;
   name: string;
+  slogan?: string;
   logoUrl?: string;
   certificateOfIncorporationUrl?: string;
   companyProfileUrl?: string;
   rcNumber: string;
   category: string;
+  aboutUs?: string;
   services: string;
   phone: string;
   location: string;
@@ -19,6 +22,12 @@ export interface Business {
   promoVideoUrl?: string;
   promoPhoto1Url?: string;
   promoPhoto2Url?: string;
+  promoPhoto3Url?: string;
+  promoPhoto4Url?: string;
+  promoPhoto5Url?: string;
+  username?: string;
+  password?: string;
   verified?: boolean;
+  verifiedAt?: number | null;
   createdAt: number;
 }

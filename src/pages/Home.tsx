@@ -32,7 +32,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
+                className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
               >
                 NIGERIA BUSINESS <br/>
                 <span className="text-green-700">ONLINE PROJECT</span>
@@ -55,7 +55,7 @@ export default function Home() {
                   to="/add-business" 
                   className="bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-700/20 w-fit"
                 >
-                  Add Your Business <ArrowRight size={20} />
+                  Create your Business Page <ArrowRight size={20} />
                 </Link>
               </motion.div>
             </div>
@@ -64,9 +64,9 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="relative mt-8 lg:mt-0"
+              className="relative mt-8 lg:mt-0 flex justify-center"
             >
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-100 max-w-sm w-full">
                 <video 
                   src="/hero-video.mp4" 
                   autoPlay
@@ -92,9 +92,6 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900">Latest Entries</h2>
               <p className="text-gray-600 mt-2">Trending</p>
             </div>
-            <Link to="/search" className="text-green-700 font-medium hover:text-green-800 hidden sm:flex items-center gap-1">
-              View All <ArrowRight size={16} />
-            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -106,7 +103,7 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
                 <Link 
-                  to={`/business/${business.id}`}
+                  to={`/business/${business.slug || business.id}`}
                   className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-200 transition-all flex flex-col h-full group"
                 >
                   <div className="flex items-start gap-4 mb-4">

@@ -35,7 +35,7 @@ const saveSmtpConfig = () => {
 };
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -63,6 +63,7 @@ app.post("/api/admin/smtp", (req, res) => {
 
 interface Business {
   id: string;
+  slug?: string;
   name: string;
   logoUrl?: string;
   rcNumber: string;
@@ -80,7 +81,13 @@ interface Business {
   promoVideoUrl?: string;
   promoPhoto1Url?: string;
   promoPhoto2Url?: string;
+  promoPhoto3Url?: string;
+  promoPhoto4Url?: string;
+  promoPhoto5Url?: string;
+  username?: string;
+  password?: string;
   verified?: boolean;
+  verifiedAt?: number | null;
   createdAt: number;
 }
 
@@ -128,6 +135,7 @@ if (businesses.length === 0) {
       whatsapp: "2348012345678",
       promoPhoto1Url: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&h=400&fit=crop",
       verified: true,
+      verifiedAt: Date.now() - 100000,
       createdAt: Date.now() - 100000,
     },
     {
@@ -155,6 +163,7 @@ if (businesses.length === 0) {
       location: "2A, Airport Road, Ikeja, Lagos",
       email: "support@zenithlogistics.ng",
       verified: true,
+      verifiedAt: Date.now(),
       createdAt: Date.now(),
     }
   ];
@@ -188,7 +197,8 @@ app.get("/api/businesses", async (req, res) => {
     }
 
     if (!admin) {
-      supabaseQuery = supabaseQuery.eq("verified", true);
+      const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+      supabaseQuery = supabaseQuery.eq("verified", true).gte("verifiedAt", oneYearAgo);
     }
     
     const { data, error } = await supabaseQuery;
@@ -203,7 +213,8 @@ app.get("/api/businesses", async (req, res) => {
   let result = businesses;
   
   if (!admin) {
-    result = result.filter(b => b.verified);
+    const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    result = result.filter(b => b.verified && b.verifiedAt && b.verifiedAt >= oneYearAgo);
   }
   
   if (query) {
@@ -222,7 +233,13 @@ app.get("/api/businesses", async (req, res) => {
 
 app.get("/api/businesses/latest", async (req, res) => {
   if (supabase) {
-    const { data, error } = await supabase.from("businesses").select("*").eq("verified", true).order("createdAt", { ascending: false }).limit(3);
+    const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const { data, error } = await supabase.from("businesses")
+      .select("*")
+      .eq("verified", true)
+      .gte("verifiedAt", oneYearAgo)
+      .order("createdAt", { ascending: false })
+      .limit(3);
     if (error) {
       console.error("Supabase Error:", error);
       return res.status(500).json({ error: "Failed to fetch latest businesses" });
@@ -231,13 +248,23 @@ app.get("/api/businesses/latest", async (req, res) => {
   }
 
   // Fallback memory
-  const latest = [...businesses].filter(b => b.verified).sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+  const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+  const latest = [...businesses]
+    .filter(b => b.verified && b.verifiedAt && b.verifiedAt >= oneYearAgo)
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 3);
   res.json(latest);
 });
 
 app.get("/api/businesses/:id", async (req, res) => {
+  const param = req.params.id;
   if (supabase) {
-    const { data, error } = await supabase.from("businesses").select("*").eq("id", req.params.id).single();
+    let { data, error } = await supabase.from("businesses").select("*").eq("slug", param).single();
+    if (error || !data) {
+      const res2 = await supabase.from("businesses").select("*").eq("id", param).single();
+      data = res2.data;
+      error = res2.error;
+    }
     if (error) {
       console.error("Supabase Error:", error);
       return res.status(404).json({ error: "Business not found" });
@@ -246,7 +273,7 @@ app.get("/api/businesses/:id", async (req, res) => {
   }
 
   // Fallback memory
-  const business = businesses.find(b => b.id === req.params.id);
+  const business = businesses.find(b => b.slug === param || b.id === param);
   if (business) {
     res.json(business);
   } else {
@@ -255,8 +282,19 @@ app.get("/api/businesses/:id", async (req, res) => {
 });
 
 app.post("/api/businesses", async (req, res) => {
+  const baseSlug = (req.body.name || "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  let generatedSlug = baseSlug || "business";
+  
+  // Basic collision check for local memory
+  let counter = 1;
+  while (businesses.some(b => b.slug === generatedSlug)) {
+    generatedSlug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
   const newBusiness = {
     ...req.body,
+    slug: generatedSlug,
     createdAt: Date.now()
   };
 
@@ -320,9 +358,72 @@ app.post("/api/businesses", async (req, res) => {
   res.status(201).json(savedBusiness);
 });
 
+app.post("/api/business/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and password are required" });
+  }
+
+  if (supabase) {
+    const { data, error } = await supabase.from("businesses").select("*").eq("username", username).eq("password", password).single();
+    if (error || !data) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+    return res.json(data);
+  }
+
+  // Fallback memory
+  const business = businesses.find(b => b.username === username && b.password === password);
+  if (business) {
+    res.json(business);
+  } else {
+    res.status(401).json({ error: "Invalid username or password" });
+  }
+});
+
 app.put("/api/businesses/:id", async (req, res) => {
   const updatedData = { ...req.body };
   delete updatedData.id;
+
+  // Send an email if a new username/password is generated (verified)
+  if (updatedData.username && updatedData.password && updatedData.verified) {
+    // Only if SMTP is configured
+    if (smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpConfig.host,
+          port: parseInt(smtpConfig.port || "587"),
+          secure: smtpConfig.port === "465",
+          auth: {
+            user: smtpConfig.user,
+            pass: smtpConfig.pass,
+          },
+        });
+
+        await transporter.sendMail({
+          from: smtpConfig.fromEmail || smtpConfig.user,
+          to: updatedData.email,
+          subject: "Your Business Profile is Verified!",
+          html: `
+            <h2>Congratulations!</h2>
+            <p>Your business profile for <strong>${updatedData.name}</strong> has been verified on Nigeria Business Online.</p>
+            <p>You can now log in to your dashboard to make updates to your profile.</p>
+            <br/>
+            <p><strong>Dashboard Login Details:</strong></p>
+            <p>Username: <strong>${updatedData.username}</strong></p>
+            <p>Password: <strong>${updatedData.password}</strong></p>
+            <br/>
+            <p>Please keep these credentials safe.</p>
+            <p>Best regards,</p>
+            <p>Nigeria Business Online Team</p>
+          `
+        });
+        console.log(`Verification email with credentials sent to ${updatedData.email}`);
+      } catch (err) {
+        console.error("Failed to send verification email:", err);
+      }
+    }
+  }
 
   if (supabase) {
     const { data, error } = await supabase.from("businesses").update(updatedData).eq("id", req.params.id).select().single();
@@ -364,6 +465,70 @@ app.delete("/api/businesses/:id", async (req, res) => {
     res.status(404).json({ error: "Business not found" });
   }
 });
+
+const sendExpirationReminders = async () => {
+  console.log("Checking for businesses requiring expiration reminders...");
+  if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.pass) {
+    console.log("SMTP not configured, skipping reminders.");
+    return;
+  }
+  
+  try {
+    const transporter = nodemailer.createTransport({
+      host: smtpConfig.host,
+      port: parseInt(smtpConfig.port || "587"),
+      secure: smtpConfig.port === "465",
+      auth: {
+        user: smtpConfig.user,
+        pass: smtpConfig.pass,
+      },
+    });
+
+    const now = Date.now();
+    
+    let allBusinesses: Business[] = [];
+    if (supabase) {
+      const { data } = await supabase.from("businesses").select("*").eq("verified", true);
+      if (data) allBusinesses = data;
+    } else {
+      allBusinesses = businesses.filter(b => b.verified);
+    }
+    
+    for (const b of allBusinesses) {
+      if (!b.verifiedAt) continue;
+      
+      const expirationDate = b.verifiedAt + 365 * 24 * 60 * 60 * 1000;
+      const msUntilExpiration = expirationDate - now;
+      
+      // Check if it's within the 2 month window (e.g. between 59 and 60 days)
+      if (msUntilExpiration > 59 * 24 * 60 * 60 * 1000 && msUntilExpiration <= 60 * 24 * 60 * 60 * 1000) {
+        console.log(`Sending reminder to ${b.name} (${b.email})`);
+        
+        await transporter.sendMail({
+          from: smtpConfig.fromEmail || smtpConfig.user,
+          to: b.email,
+          subject: "Notice: Your Business Subscription Expires in 2 Months",
+          html: `
+            <h2>Subscription Expiration Reminder</h2>
+            <p>Dear ${b.name},</p>
+            <p>This is a reminder that your verified business listing on <strong>Nigeria Business Online</strong> will expire on <strong>${new Date(expirationDate).toLocaleDateString()}</strong> (in approximately 2 months).</p>
+            <p>Please contact the administration to renew your subscription and maintain your verified visibility on our platform.</p>
+            <br/>
+            <p>Best regards,</p>
+            <p>Nigeria Business Online Team</p>
+          `
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to send reminders:", error);
+  }
+};
+
+// Run once a day
+setInterval(sendExpirationReminders, 24 * 60 * 60 * 1000);
+// Also run on startup
+setTimeout(sendExpirationReminders, 5000);
 
 // Vite middleware for development
 async function startServer() {

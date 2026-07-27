@@ -19,11 +19,16 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   "linkedinUrl" TEXT,
   "promoPhoto1Url" TEXT,
   "promoPhoto2Url" TEXT,
+  "promoPhoto3Url" TEXT,
+  "promoPhoto4Url" TEXT,
+  "promoPhoto5Url" TEXT,
   "promoVideoUrl" TEXT,
   "certificateOfIncorporationUrl" TEXT,
   "companyProfileUrl" TEXT,
   verified BOOLEAN DEFAULT false,
-  "createdAt" BIGINT NOT NULL
+  "createdAt" BIGINT NOT NULL,
+  slug TEXT,
+  "verifiedAt" BIGINT
 );
 
 -- Enable Row Level Security (optional but recommended)

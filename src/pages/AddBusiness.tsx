@@ -8,10 +8,10 @@ export default function AddBusiness() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   
   const initialFormState = {
-    name: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", services: "",
+    name: "", slogan: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", customCategory: "", aboutUs: "", services: "",
     phone: "", location: "", email: "", website: "", whatsapp: "",
     facebookUrl: "", instagramUrl: "", twitterUrl: "", linkedinUrl: "",
-    promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "",
+    promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "", promoPhoto3Url: "", promoPhoto4Url: "", promoPhoto5Url: "",
     verified: false
   };
   const [formData, setFormData] = useState(initialFormState);
@@ -19,6 +19,11 @@ export default function AddBusiness() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (fieldName === 'promoVideoUrl' && file.size > 15 * 1024 * 1024) {
+        alert("Video file size must be a maximum of 15MB.");
+        e.target.value = "";
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({ ...prev, [fieldName]: reader.result as string }));
@@ -35,10 +40,16 @@ export default function AddBusiness() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    const submitData = { ...formData };
+    if (submitData.category === "Other" && submitData.customCategory) {
+      submitData.category = submitData.customCategory;
+    }
+    delete (submitData as any).customCategory;
+
     fetch("/api/businesses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(submitData)
     })
     .then(async res => {
       if (!res.ok) {
@@ -89,22 +100,26 @@ export default function AddBusiness() {
                 <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">3</div>
                 <p>Once approved, your business will be published to the public platform with a "Verified" badge.</p>
               </li>
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">4</div>
+                <p>To expedite the process and secure your subscription, please proceed to make your payment.</p>
+              </li>
             </ul>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
-              to="/"
-              className="w-full sm:w-auto bg-green-700 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-green-800 transition-colors inline-flex items-center justify-center gap-2"
+              to="/payment"
+              className="w-full sm:w-auto bg-green-700 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-green-800 transition-colors inline-flex items-center justify-center gap-2 shadow-sm"
             >
-              Back to Home <ArrowRight size={18} />
+              Make Payment <ArrowRight size={18} />
             </Link>
-            <button 
-              onClick={() => setSubmitSuccess(false)}
-              className="w-full sm:w-auto bg-white text-gray-700 border border-gray-300 px-8 py-3.5 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+            <Link 
+              to="/"
+              className="w-full sm:w-auto bg-white text-gray-700 border border-gray-300 px-8 py-3.5 rounded-xl font-medium hover:bg-gray-50 transition-colors inline-flex items-center justify-center"
             >
-              Submit Another Profile
-            </button>
+              Back to Home
+            </Link>
           </div>
         </div>
       </div>
@@ -139,6 +154,11 @@ export default function AddBusiness() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Business / Company / Organisation Name *</label>
                 <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Zenith Tech Solutions Ltd" />
               </div>
+
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Slogan / Buyline / Motto (Optional)</label>
+                <input type="text" name="slogan" value={formData.slogan} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. Innovating the future" />
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number *</label>
@@ -152,28 +172,44 @@ export default function AddBusiness() {
                   <option value="Agriculture">Agriculture & Agro-Allied</option>
                   <option value="Arts & Crafts">Arts & Crafts</option>
                   <option value="Automotive">Automotive & Repair</option>
+                  <option value="Automotive (Auto)">Automotive (Auto)</option>
                   <option value="Aviation">Aviation</option>
                   <option value="Beauty">Beauty & Personal Care</option>
-                  <option value="Engineering and Construction">Engineering and Construction</option>
+                  <option value="Beauty & Wellness">Beauty & Wellness</option>
+                  <option value="Community & Religion">Community & Religion</option>
+                  <option value="Construction & Contracting">Construction & Contracting</option>
+                  <option value="Digital Marketing">Digital Marketing</option>
                   <option value="E-Commerce">E-Commerce</option>
                   <option value="Education">Education & Training</option>
                   <option value="Energy and Power">Energy and Power</option>
+                  <option value="Engineering and Construction">Engineering and Construction</option>
                   <option value="Entertainment">Entertainment & Media</option>
+                  <option value="Entertainment & Recreation">Entertainment & Recreation</option>
                   <option value="Environmental">Environmental Services</option>
                   <option value="Event Management">Event Management Services</option>
                   <option value="Fashion">Fashion & Apparel</option>
                   <option value="Finance">Financial Services</option>
+                  <option value="Finance & Insurance">Finance & Insurance</option>
                   <option value="Food & Beverage">Food & Beverage</option>
+                  <option value="Food & Drink">Food & Drink</option>
                   <option value="Government">Government & Public Services</option>
+                  <option value="Government & Public Sector">Government & Public Sector</option>
+                  <option value="Health & Medical">Health & Medical</option>
                   <option value="Healthcare">Healthcare & Pharmaceuticals</option>
                   <option value="Home & Property">Home & Property Services</option>
+                  <option value="Home Services & Trades">Home Services & Trades</option>
                   <option value="Hospitality">Hospitality & Tourism</option>
                   <option value="Industrial">Industrial Services</option>
+                  <option value="Industrial & Manufacturing">Industrial & Manufacturing</option>
+                  <option value="Information & Communications Technology (ICT)">Information & Communications Technology (ICT)</option>
                   <option value="Legal">Legal Services</option>
+                  <option value="Legal & Professional">Legal & Professional</option>
+                  <option value="Lodging & Travel">Lodging & Travel</option>
                   <option value="Logistics">Logistics</option>
                   <option value="Manufacturing">Manufacturing & Production</option>
                   <option value="Marine & Shipping">Marine & Shipping</option>
                   <option value="Marketing">Marketing & Advertising</option>
+                  <option value="Marketing & Media">Marketing & Media</option>
                   <option value="Media & Entertainment">Media & Entertainment</option>
                   <option value="Mining">Mining & Solid Minerals</option>
                   <option value="Non-Profit">Non-Profit & NGO</option>
@@ -181,14 +217,33 @@ export default function AddBusiness() {
                   <option value="Printing and Publishing">Printing and Publishing</option>
                   <option value="Professional Services">Professional Services</option>
                   <option value="Real Estate">Real Estate</option>
+                  <option value="Real Estate & Property">Real Estate & Property</option>
                   <option value="Retail">Retail & E-commerce</option>
+                  <option value="Retail & Shopping">Retail & Shopping</option>
                   <option value="Security Services">Security Services</option>
                   <option value="Sports & Fitness">Sports & Fitness</option>
                   <option value="Technology">Technology & Software</option>
+                  <option value="Technology & IT">Technology & IT</option>
                   <option value="Telecommunications">Telecommunications</option>
                   <option value="Transportation & Logistics">Transportation & Logistics</option>
                   <option value="Other">Other</option>
                 </select>
+                {formData.category === "Other" && (
+                  <input 
+                    required 
+                    type="text" 
+                    name="customCategory" 
+                    value={(formData as any).customCategory} 
+                    onChange={handleChange} 
+                    className="w-full px-4 py-3 mt-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" 
+                    placeholder="Please specify your business category" 
+                  />
+                )}
+              </div>
+
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">About Us / Brief Company Information *</label>
+                <textarea required name="aboutUs" value={formData.aboutUs} onChange={handleChange} rows={3} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none resize-none" placeholder="Provide a brief overview of your company..."></textarea>
               </div>
 
               <div className="col-span-1 md:col-span-2">
@@ -258,8 +313,21 @@ export default function AddBusiness() {
               </div>
 
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Promotional Video URL (Optional)</label>
-                <input type="url" name="promoVideoUrl" value={formData.promoVideoUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. https://youtube.com/watch?v=..." />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promotional Video (Optional)</label>
+                <div className="space-y-4">
+                  <input type="url" name="promoVideoUrl" value={formData.promoVideoUrl.startsWith('data:') ? '' : formData.promoVideoUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="YouTube URL (e.g. https://youtube.com/watch?v=...)" />
+                  <div className="flex items-center gap-4">
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                    <span className="text-sm text-gray-400 font-medium">OR DIRECT UPLOAD</span>
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                  </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
+                    <Upload className="mx-auto text-gray-400 mb-3" size={24} />
+                    <p className="text-xs text-gray-500 mb-3">MP4, WebM (Max 15MB)</p>
+                    <input type="file" accept="video/*" onChange={(e) => handleFileChange(e, 'promoVideoUrl')} className="text-sm text-gray-500 w-full" />
+                    {formData.promoVideoUrl && formData.promoVideoUrl.startsWith('data:video') && <span className="text-xs text-green-600 mt-2 block">Video file selected</span>}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -309,6 +377,30 @@ export default function AddBusiness() {
                 <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
                 <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto2Url')} className="text-sm text-gray-500 w-full" />
                 {formData.promoPhoto2Url && <span className="text-xs text-green-600 mt-2 block">Photo 2 selected</span>}
+              </div>
+
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
+                <Upload className="mx-auto text-gray-400 mb-3" size={24} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Promotional Photo 3 (Optional)</label>
+                <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto3Url')} className="text-sm text-gray-500 w-full" />
+                {formData.promoPhoto3Url && <span className="text-xs text-green-600 mt-2 block">Photo 3 selected</span>}
+              </div>
+
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
+                <Upload className="mx-auto text-gray-400 mb-3" size={24} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Promotional Photo 4 (Optional)</label>
+                <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto4Url')} className="text-sm text-gray-500 w-full" />
+                {formData.promoPhoto4Url && <span className="text-xs text-green-600 mt-2 block">Photo 4 selected</span>}
+              </div>
+
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition-colors">
+                <Upload className="mx-auto text-gray-400 mb-3" size={24} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Promotional Photo 5 (Optional)</label>
+                <p className="text-xs text-gray-500 mb-3">JPG, PNG (Max 5MB)</p>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto5Url')} className="text-sm text-gray-500 w-full" />
+                {formData.promoPhoto5Url && <span className="text-xs text-green-600 mt-2 block">Photo 5 selected</span>}
               </div>
             </div>
           </div>

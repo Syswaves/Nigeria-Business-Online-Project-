@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Hash, Briefcase, BadgeCheck, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Hash, Briefcase, BadgeCheck, MessageCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Business } from "../types";
 import { Helmet } from "react-helmet-async";
 
@@ -8,6 +8,8 @@ export default function BusinessProfile() {
   const { id } = useParams();
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/businesses/${id}`)
@@ -24,6 +26,44 @@ export default function BusinessProfile() {
       });
   }, [id]);
 
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    
+    let interval: NodeJS.Timeout;
+    
+    const startScroll = () => {
+      interval = setInterval(() => {
+        if (gallery) {
+          const { scrollLeft, scrollWidth, clientWidth } = gallery;
+          if (scrollLeft + clientWidth >= scrollWidth - 10) {
+            gallery.scrollTo({ left: 0, behavior: 'smooth' });
+          } else {
+            gallery.scrollBy({ left: 272, behavior: 'smooth' });
+          }
+        }
+      }, 3000);
+    };
+
+    startScroll();
+
+    const handleMouseEnter = () => clearInterval(interval);
+    const handleMouseLeave = () => startScroll();
+
+    gallery.addEventListener('mouseenter', handleMouseEnter);
+    gallery.addEventListener('mouseleave', handleMouseLeave);
+    gallery.addEventListener('touchstart', handleMouseEnter);
+    gallery.addEventListener('touchend', handleMouseLeave);
+
+    return () => {
+      clearInterval(interval);
+      gallery.removeEventListener('mouseenter', handleMouseEnter);
+      gallery.removeEventListener('mouseleave', handleMouseLeave);
+      gallery.removeEventListener('touchstart', handleMouseEnter);
+      gallery.removeEventListener('touchend', handleMouseLeave);
+    };
+  }, [business, loading]);
+
   if (loading) {
     return <div className="max-w-4xl mx-auto px-4 py-24 text-center">Loading profile...</div>;
   }
@@ -36,6 +76,36 @@ export default function BusinessProfile() {
         </Helmet>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Business not found</h2>
         <Link to="/" className="text-green-700 font-medium hover:underline">Return to Home</Link>
+      </div>
+    );
+  }
+
+  const isExpired = business.verified && business.verifiedAt && (Date.now() > business.verifiedAt + 365 * 24 * 60 * 60 * 1000);
+
+  if (isExpired) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center">
+        <Helmet>
+          <title>Subscription Expired | Nigeria Business Online</title>
+        </Helmet>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 inline-block max-w-lg">
+          <h2 className="text-2xl font-bold text-red-700 mb-4">Business Subscription Expired</h2>
+          <p className="text-gray-700 mb-6">
+            The profile for <span className="font-semibold">{business.name}</span> is currently inactive because its subscription has expired. 
+            To become visible again, please request reactivation.
+          </p>
+          <div className="space-y-4">
+            <button 
+              className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              onClick={() => window.location.href = `mailto:admin@nigeriabusinessonline.com?subject=Reactivation Request: ${business.name}`}
+            >
+              Request Reactivation
+            </button>
+            <Link to="/" className="block text-gray-600 font-medium hover:text-gray-900 transition-colors">
+              Return to Homepage
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -86,6 +156,9 @@ export default function BusinessProfile() {
                       </span>
                     )}
                   </h1>
+                  {business.slogan && (
+                    <p className="text-gray-600 italic mt-1 text-lg">{business.slogan}</p>
+                  )}
                   <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
                     {business.category}
                   </span>
@@ -100,6 +173,11 @@ export default function BusinessProfile() {
             <div className="md:col-span-2 space-y-10">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">About & Services</h2>
+                {business.aboutUs && (
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-4">
+                    {business.aboutUs}
+                  </p>
+                )}
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {business.services}
                 </p>
@@ -127,15 +205,40 @@ export default function BusinessProfile() {
               </div>
 
               {business.promoVideoUrl && (
-                <div>
+                <div className="mb-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Promotional Video</h2>
                   <div className="aspect-video w-full rounded-2xl overflow-hidden bg-gray-100">
-                    <iframe 
-                      src={business.promoVideoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
-                      title="Promotional Video" 
-                      className="w-full h-full border-0" 
-                      allowFullScreen
-                    ></iframe>
+                    {(business.promoVideoUrl.includes('youtube.com') || business.promoVideoUrl.includes('youtu.be')) ? (
+                      <iframe 
+                        src={business.promoVideoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} 
+                        title="Promotional Video" 
+                        className="w-full h-full border-0" 
+                        allowFullScreen
+                      ></iframe>
+                    ) : (
+                      <video 
+                        src={business.promoVideoUrl}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(business.promoPhoto1Url || business.promoPhoto2Url || business.promoPhoto3Url || business.promoPhoto4Url || business.promoPhoto5Url) && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Photo Gallery</h2>
+                  <div ref={galleryRef} className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {[business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean).map((url, index) => (
+                      <div 
+                        key={index} 
+                        className="flex-shrink-0 w-64 h-64 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 snap-center cursor-pointer group"
+                        onClick={() => setSelectedPhotoIndex(index)}
+                      >
+                        <img src={url} alt={`Promotional Photo ${index + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -238,6 +341,50 @@ export default function BusinessProfile() {
           </div>
         </div>
       </div>
+
+      {/* Photo Lightbox Modal */}
+      {selectedPhotoIndex !== null && business && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <button 
+            className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 rounded-full bg-black/50"
+            onClick={() => setSelectedPhotoIndex(null)}
+          >
+            <X size={32} />
+          </button>
+          
+          <button 
+            className="absolute left-6 text-white hover:text-gray-300 p-3 rounded-full bg-black/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              const photos = [business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean);
+              setSelectedPhotoIndex((prev) => prev !== null && prev > 0 ? prev - 1 : photos.length - 1);
+            }}
+          >
+            <ChevronLeft size={36} />
+          </button>
+          
+          <img 
+            src={[business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean)[selectedPhotoIndex]} 
+            alt="Enlarged Promotional Photo" 
+            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+          />
+          
+          <button 
+            className="absolute right-6 text-white hover:text-gray-300 p-3 rounded-full bg-black/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              const photos = [business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean);
+              setSelectedPhotoIndex((prev) => prev !== null && prev < photos.length - 1 ? prev + 1 : 0);
+            }}
+          >
+            <ChevronRight size={36} />
+          </button>
+          
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white bg-black/50 px-4 py-2 rounded-full text-sm">
+            {[business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean).length > 0 && `${selectedPhotoIndex + 1} / ${[business.promoPhoto1Url, business.promoPhoto2Url, business.promoPhoto3Url, business.promoPhoto4Url, business.promoPhoto5Url].filter(Boolean).length}`}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

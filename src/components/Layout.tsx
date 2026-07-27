@@ -77,6 +77,12 @@ export default function Layout() {
             >
               Contact Us
             </Link>
+            <Link 
+              to="/dashboard" 
+              className="text-gray-700 hover:text-green-700 font-medium transition-colors"
+            >
+              Business Page Login
+            </Link>
           </div>
         </div>
 
@@ -116,6 +122,13 @@ export default function Layout() {
                   onClick={closeMenu}
                 >
                   Contact Us
+                </Link>
+                <Link 
+                  to="/dashboard" 
+                  className="block text-gray-700 hover:text-green-700 font-medium py-2 transition-colors"
+                  onClick={closeMenu}
+                >
+                  Business Page Login
                 </Link>
                 <Link 
                   to="/add-business" 

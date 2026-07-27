@@ -13,6 +13,7 @@ import SearchResults from "./pages/SearchResults";
 import TheProject from "./pages/TheProject";
 import ContactUs from "./pages/ContactUs";
 import Payment from "./pages/Payment";
+import BusinessDashboard from "./pages/BusinessDashboard";
 
 import { HelmetProvider } from "react-helmet-async";
 
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="search" element={<SearchResults />} />
             <Route path="payment" element={<Payment />} />
+            <Route path="dashboard" element={<BusinessDashboard />} />
           </Route>
         </Routes>
       </BrowserRouter>

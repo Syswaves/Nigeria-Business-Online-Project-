@@ -50,7 +50,7 @@ export default function SearchResults() {
         {!loading && results.map((business) => (
           <Link 
             key={business.id}
-            to={`/business/${business.id}`}
+            to={`/business/${business.slug || business.id}`}
             className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-200 transition-all flex flex-col h-full group"
           >
             <div className="flex items-start gap-4 mb-4">

@@ -13,10 +13,10 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const initialFormState = {
-    name: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", services: "",
+    name: "", slogan: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", aboutUs: "", services: "",
     phone: "", location: "", email: "", website: "", whatsapp: "",
     facebookUrl: "", instagramUrl: "", twitterUrl: "", linkedinUrl: "",
-    promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "",
+    promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "", promoPhoto3Url: "", promoPhoto4Url: "", promoPhoto5Url: "",
     verified: true
   };
   const [formData, setFormData] = useState(initialFormState);
@@ -101,6 +101,11 @@ export default function AdminDashboard() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (fieldName === 'promoVideoUrl' && file.size > 15 * 1024 * 1024) {
+        alert("Video file size must be a maximum of 15MB.");
+        e.target.value = "";
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({ ...prev, [fieldName]: reader.result as string }));
@@ -168,10 +173,24 @@ export default function AdminDashboard() {
   };
 
   const handleToggleVerified = (business: Business) => {
+    const isNowVerified = !business.verified;
+    const updatedData = { 
+      ...business, 
+      verified: isNowVerified,
+      verifiedAt: isNowVerified ? Date.now() : null
+    };
+
+    if (isNowVerified && !updatedData.username) {
+      updatedData.username = business.email.split('@')[0] + Math.floor(Math.random() * 1000);
+      updatedData.password = Math.random().toString(36).slice(-8);
+      // Let's also alert the admin about the generated credentials so they can share them, or they can view them later
+      alert(`Generated credentials for ${business.name}:\nUsername: ${updatedData.username}\nPassword: ${updatedData.password}\nPlease share these with the business owner.`);
+    }
+
     fetch(`/api/businesses/${business.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...business, verified: !business.verified })
+      body: JSON.stringify(updatedData)
     })
     .then(res => res.json())
     .then(() => fetchBusinesses())
@@ -190,11 +209,13 @@ export default function AdminDashboard() {
     setEditingId(business.id);
     setFormData({
       name: business.name || "",
+      slogan: business.slogan || "",
       logoUrl: business.logoUrl || "",
       certificateOfIncorporationUrl: business.certificateOfIncorporationUrl || "",
       companyProfileUrl: business.companyProfileUrl || "",
       rcNumber: business.rcNumber || "",
       category: business.category || "",
+      aboutUs: business.aboutUs || "",
       services: business.services || "",
       phone: business.phone || "",
       location: business.location || "",
@@ -208,6 +229,9 @@ export default function AdminDashboard() {
       promoVideoUrl: business.promoVideoUrl || "",
       promoPhoto1Url: business.promoPhoto1Url || "",
       promoPhoto2Url: business.promoPhoto2Url || "",
+      promoPhoto3Url: business.promoPhoto3Url || "",
+      promoPhoto4Url: business.promoPhoto4Url || "",
+      promoPhoto5Url: business.promoPhoto5Url || "",
       verified: business.verified || false
     });
     setShowAddForm(true);
@@ -311,6 +335,11 @@ export default function AdminDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
                 <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
               </div>
+
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Slogan / Buyline / Motto (Optional)</label>
+                <input type="text" name="slogan" value={formData.slogan} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" placeholder="e.g. Innovating the future" />
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number *</label>
@@ -324,28 +353,44 @@ export default function AdminDashboard() {
                   <option value="Agriculture">Agriculture & Agro-Allied</option>
                   <option value="Arts & Crafts">Arts & Crafts</option>
                   <option value="Automotive">Automotive & Repair</option>
+                  <option value="Automotive (Auto)">Automotive (Auto)</option>
                   <option value="Aviation">Aviation</option>
                   <option value="Beauty">Beauty & Personal Care</option>
-                  <option value="Engineering and Construction">Engineering and Construction</option>
+                  <option value="Beauty & Wellness">Beauty & Wellness</option>
+                  <option value="Community & Religion">Community & Religion</option>
+                  <option value="Construction & Contracting">Construction & Contracting</option>
+                  <option value="Digital Marketing">Digital Marketing</option>
                   <option value="E-Commerce">E-Commerce</option>
                   <option value="Education">Education & Training</option>
                   <option value="Energy and Power">Energy and Power</option>
+                  <option value="Engineering and Construction">Engineering and Construction</option>
                   <option value="Entertainment">Entertainment & Media</option>
+                  <option value="Entertainment & Recreation">Entertainment & Recreation</option>
                   <option value="Environmental">Environmental Services</option>
                   <option value="Event Management">Event Management Services</option>
                   <option value="Fashion">Fashion & Apparel</option>
                   <option value="Finance">Financial Services</option>
+                  <option value="Finance & Insurance">Finance & Insurance</option>
                   <option value="Food & Beverage">Food & Beverage</option>
+                  <option value="Food & Drink">Food & Drink</option>
                   <option value="Government">Government & Public Services</option>
+                  <option value="Government & Public Sector">Government & Public Sector</option>
+                  <option value="Health & Medical">Health & Medical</option>
                   <option value="Healthcare">Healthcare & Pharmaceuticals</option>
                   <option value="Home & Property">Home & Property Services</option>
+                  <option value="Home Services & Trades">Home Services & Trades</option>
                   <option value="Hospitality">Hospitality & Tourism</option>
                   <option value="Industrial">Industrial Services</option>
+                  <option value="Industrial & Manufacturing">Industrial & Manufacturing</option>
+                  <option value="Information & Communications Technology (ICT)">Information & Communications Technology (ICT)</option>
                   <option value="Legal">Legal Services</option>
+                  <option value="Legal & Professional">Legal & Professional</option>
+                  <option value="Lodging & Travel">Lodging & Travel</option>
                   <option value="Logistics">Logistics</option>
                   <option value="Manufacturing">Manufacturing & Production</option>
                   <option value="Marine & Shipping">Marine & Shipping</option>
                   <option value="Marketing">Marketing & Advertising</option>
+                  <option value="Marketing & Media">Marketing & Media</option>
                   <option value="Media & Entertainment">Media & Entertainment</option>
                   <option value="Mining">Mining & Solid Minerals</option>
                   <option value="Non-Profit">Non-Profit & NGO</option>
@@ -353,14 +398,22 @@ export default function AdminDashboard() {
                   <option value="Printing and Publishing">Printing and Publishing</option>
                   <option value="Professional Services">Professional Services</option>
                   <option value="Real Estate">Real Estate</option>
+                  <option value="Real Estate & Property">Real Estate & Property</option>
                   <option value="Retail">Retail & E-commerce</option>
+                  <option value="Retail & Shopping">Retail & Shopping</option>
                   <option value="Security Services">Security Services</option>
                   <option value="Sports & Fitness">Sports & Fitness</option>
                   <option value="Technology">Technology & Software</option>
+                  <option value="Technology & IT">Technology & IT</option>
                   <option value="Telecommunications">Telecommunications</option>
                   <option value="Transportation & Logistics">Transportation & Logistics</option>
                   <option value="Other">Other</option>
                 </select>
+              </div>
+
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">About Us / Brief Company Information *</label>
+                <textarea required name="aboutUs" value={formData.aboutUs} onChange={handleChange} rows={3} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none resize-none"></textarea>
               </div>
 
               <div className="col-span-1 md:col-span-2">
@@ -432,18 +485,47 @@ export default function AdminDashboard() {
               </div>
 
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Video URL (Optional)</label>
-                <input type="url" name="promoVideoUrl" value={formData.promoVideoUrl} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promotional Video (Optional)</label>
+                <div className="space-y-3">
+                  <input type="url" name="promoVideoUrl" value={formData.promoVideoUrl.startsWith('data:') ? '' : formData.promoVideoUrl} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" placeholder="YouTube URL (e.g. https://youtube.com/watch?v=...)" />
+                  <div className="flex items-center gap-4">
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                    <span className="text-xs text-gray-400 font-medium">OR DIRECT UPLOAD (Max 15MB)</span>
+                    <div className="h-px bg-gray-200 flex-1"></div>
+                  </div>
+                  <input type="file" accept="video/*" onChange={(e) => handleFileChange(e, 'promoVideoUrl')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                  {formData.promoVideoUrl && formData.promoVideoUrl.startsWith('data:video') && <span className="text-xs text-green-600 mt-1 block">Video file selected</span>}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 1 URL (Optional)</label>
-                <input type="url" name="promoPhoto1Url" value={formData.promoPhoto1Url} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 1 (Optional)</label>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto1Url')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                {formData.promoPhoto1Url && formData.promoPhoto1Url.length > 0 && <span className="text-xs text-green-600 mt-1 block">Photo 1 selected</span>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 2 URL (Optional)</label>
-                <input type="url" name="promoPhoto2Url" value={formData.promoPhoto2Url} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 2 (Optional)</label>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto2Url')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                {formData.promoPhoto2Url && formData.promoPhoto2Url.length > 0 && <span className="text-xs text-green-600 mt-1 block">Photo 2 selected</span>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 3 (Optional)</label>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto3Url')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                {formData.promoPhoto3Url && formData.promoPhoto3Url.length > 0 && <span className="text-xs text-green-600 mt-1 block">Photo 3 selected</span>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 4 (Optional)</label>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto4Url')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                {formData.promoPhoto4Url && formData.promoPhoto4Url.length > 0 && <span className="text-xs text-green-600 mt-1 block">Photo 4 selected</span>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Promo Photo 5 (Optional)</label>
+                <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'promoPhoto5Url')} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                {formData.promoPhoto5Url && formData.promoPhoto5Url.length > 0 && <span className="text-xs text-green-600 mt-1 block">Photo 5 selected</span>}
               </div>
 
               <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-2">
@@ -478,16 +560,17 @@ export default function AdminDashboard() {
             <thead>
               <tr className="bg-white border-b border-gray-200 text-sm text-gray-500">
                 <th className="p-4 font-medium">Business Info</th>
-                <th className="p-4 font-medium">Contact</th>
-                <th className="p-4 font-medium">Added On</th>
+                <th className="p-4 font-medium text-left">Contact</th>
+                <th className="p-4 font-medium text-left">Added On</th>
+                <th className="p-4 font-medium text-left">Expires On</th>
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan={4} className="p-8 text-center text-gray-500">Loading data...</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading data...</td></tr>
               ) : businesses.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-gray-500">No businesses found. Add one to get started.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-gray-500">No businesses found. Add one to get started.</td></tr>
               ) : (
                 businesses.map((business) => (
                   <tr key={business.id} className="hover:bg-gray-50 transition-colors">
@@ -516,6 +599,15 @@ export default function AdminDashboard() {
                     <td className="p-4">
                       <p className="text-sm text-gray-600">{new Date(business.createdAt).toLocaleDateString()}</p>
                     </td>
+                    <td className="p-4">
+                      {business.verified && business.verifiedAt ? (
+                        <p className={`text-sm ${business.verifiedAt + 365 * 24 * 60 * 60 * 1000 < Date.now() ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                          {new Date(business.verifiedAt + 365 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                        </p>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="p-4 text-right">
                       <button 
                         onClick={() => handleToggleVerified(business)}
@@ -535,7 +627,7 @@ export default function AdminDashboard() {
                       >
                         Delete
                       </button>
-                      <a href={`/business/${business.id}`} target="_blank" rel="noreferrer" className="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                      <a href={`/business/${business.slug || business.id}`} target="_blank" rel="noreferrer" className="text-gray-600 hover:text-gray-800 text-sm font-medium">
                         View
                       </a>
                     </td>

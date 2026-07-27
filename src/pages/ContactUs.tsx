@@ -138,7 +138,7 @@ export default function ContactUs() {
                     type="submit"
                     className="w-full bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-xl font-medium transition-colors"
                   >
-                    Submit Message
+                    Send Message
                   </button>
                 </form>
               </div>
