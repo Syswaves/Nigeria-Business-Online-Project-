@@ -8,8 +8,23 @@ import fs from "fs";
 
 dotenv.config({ override: true });
 
+function cleanSmtpHost(host: string) {
+  if (!host) return "";
+  try {
+    // If it has a scheme, parse it using URL
+    if (host.includes("://")) {
+      const url = new URL(host);
+      return url.hostname;
+    }
+    // Remove port if present
+    return host.split(":")[0];
+  } catch (err) {
+    return host;
+  }
+}
+
 let smtpConfig = {
-  host: process.env.SMTP_HOST || "",
+  host: cleanSmtpHost(process.env.SMTP_HOST || ""),
   port: process.env.SMTP_PORT || "",
   user: process.env.SMTP_USER || "",
   pass: process.env.SMTP_PASS || "",
@@ -20,6 +35,9 @@ const SMTP_FILE = path.join(process.cwd(), "smtp.json");
 if (fs.existsSync(SMTP_FILE)) {
   try {
     const savedSmtp = JSON.parse(fs.readFileSync(SMTP_FILE, "utf-8"));
+    if (savedSmtp.host) {
+      savedSmtp.host = cleanSmtpHost(savedSmtp.host);
+    }
     smtpConfig = { ...smtpConfig, ...savedSmtp };
   } catch (err) {
     console.error("Error reading smtp.json", err);
@@ -51,7 +69,7 @@ app.get("/api/admin/smtp", (req, res) => {
 
 app.post("/api/admin/smtp", (req, res) => {
   const { host, port, user, pass, fromEmail } = req.body;
-  if (host !== undefined) smtpConfig.host = host;
+  if (host !== undefined) smtpConfig.host = cleanSmtpHost(host);
   if (port !== undefined) smtpConfig.port = port;
   if (user !== undefined) smtpConfig.user = user;
   if (pass !== undefined && pass !== "") smtpConfig.pass = pass;
@@ -400,6 +418,9 @@ app.put("/api/businesses/:id", async (req, res) => {
           },
         });
 
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+        const profileUrl = `${baseUrl}/business/${req.params.id}`;
+
         await transporter.sendMail({
           from: smtpConfig.fromEmail || smtpConfig.user,
           to: updatedData.email,
@@ -407,7 +428,8 @@ app.put("/api/businesses/:id", async (req, res) => {
           html: `
             <h2>Congratulations!</h2>
             <p>Your business profile for <strong>${updatedData.name}</strong> has been verified on Nigeria Business Online.</p>
-            <p>You can now log in to your dashboard to make updates to your profile.</p>
+            <p>You can view your published profile here: <a href="${profileUrl}">${profileUrl}</a></p>
+            <p>You can also log in to your dashboard to make updates to your profile anytime.</p>
             <br/>
             <p><strong>Dashboard Login Details:</strong></p>
             <p>Username: <strong>${updatedData.username}</strong></p>

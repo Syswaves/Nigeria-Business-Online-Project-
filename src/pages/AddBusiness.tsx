@@ -161,8 +161,8 @@ export default function AddBusiness() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number *</label>
-                <input required type="text" name="rcNumber" value={formData.rcNumber} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. RC123456" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number (Optional)</label>
+                <input type="text" name="rcNumber" value={formData.rcNumber} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" placeholder="e.g. RC123456" />
               </div>
 
               <div>

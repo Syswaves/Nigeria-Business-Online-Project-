@@ -15,7 +15,12 @@ export default function SearchResults() {
     fetch(`/api/businesses?q=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
-        setResults(data);
+        if (Array.isArray(data)) {
+          setResults(data);
+        } else {
+          console.error("Failed to search businesses:", data);
+          setResults([]);
+        }
         setLoading(false);
       })
       .catch(err => {

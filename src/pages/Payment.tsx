@@ -6,6 +6,7 @@ import { usePaystackPayment } from "react-paystack";
 
 export default function Payment() {
   const [email, setEmail] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const amount = 1000 * 100; // 1,000 NGN in kobo
 
   const config = {
@@ -13,6 +14,15 @@ export default function Payment() {
     email: email,
     amount: amount, 
     publicKey: (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    metadata: {
+      custom_fields: [
+        {
+          display_name: "Business Name",
+          variable_name: "business_name",
+          value: businessName,
+        }
+      ]
+    }
   };
 
   const initializePayment = usePaystackPayment(config);
@@ -28,8 +38,8 @@ export default function Payment() {
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      alert("Please enter your email address to proceed with payment.");
+    if (!email || !businessName) {
+      alert("Please enter your business name and email address to proceed with payment.");
       return;
     }
     initializePayment({ onSuccess, onClose });
@@ -81,6 +91,18 @@ export default function Payment() {
 
             <form onSubmit={handlePayment} className="w-full space-y-4">
               <div>
+                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1 text-left">Business Name</label>
+                <input
+                  type="text"
+                  id="businessName"
+                  required
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Enter your  business name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1 text-left">Email Address</label>
                 <input
                   type="email"
@@ -109,7 +131,7 @@ export default function Payment() {
       </div>
       
       <div className="mt-12 text-center text-sm text-gray-500">
-        <p>After successful payment, our team will confirm the transaction and publish your verified profile.</p>
+        <p>After successful payment, our team will confirm the transaction and publish your verified profile and create your business page.</p>
         <p className="mt-2">Need help? <Link to="/contact" className="text-green-700 hover:underline">Contact Support</Link></p>
       </div>
     </div>

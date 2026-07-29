@@ -29,7 +29,11 @@ export default function AdminDashboard() {
     fetch("/api/businesses?admin=true")
       .then(res => res.json())
       .then(data => {
-        setBusinesses(data);
+        if (Array.isArray(data)) {
+          setBusinesses(data);
+        } else {
+          console.error("Failed to fetch businesses:", data);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -342,8 +346,8 @@ export default function AdminDashboard() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number *</label>
-                <input required type="text" name="rcNumber" value={formData.rcNumber} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">RC / BN Number (Optional)</label>
+                <input type="text" name="rcNumber" value={formData.rcNumber} onChange={handleChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none" />
               </div>
 
               <div>
