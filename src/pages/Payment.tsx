@@ -7,7 +7,7 @@ import { usePaystackPayment } from "react-paystack";
 export default function Payment() {
   const [email, setEmail] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const amount = 1000 * 100; // 1,000 NGN in kobo
+  const amount = 10000 * 100; // 10,000 NGN in kobo
 
   const config = {
     reference: (new Date()).getTime().toString(),
@@ -64,7 +64,7 @@ export default function Payment() {
         <div className="p-8 sm:p-12">
           <div className="flex flex-col items-center mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Publication Fee</h2>
-            <div className="text-3xl font-bold text-gray-900 mb-2">₦1,000</div>
+            <div className="text-3xl font-bold text-gray-900 mb-2">₦10,000</div>
             <div className="text-sm text-gray-500 mb-6">Per year</div>
             
             <div className="w-full bg-gray-50 rounded-2xl p-6 mb-8 border border-gray-100">
