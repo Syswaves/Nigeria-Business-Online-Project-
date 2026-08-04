@@ -13,7 +13,7 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const initialFormState = {
-    name: "", slogan: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", aboutUs: "", services: "",
+    name: "", slogan: "", logoUrl: "", certificateOfIncorporationUrl: "", companyProfileUrl: "", rcNumber: "", category: "", customCategory: "", aboutUs: "", services: "",
     phone: "", location: "", email: "", website: "", whatsapp: "",
     facebookUrl: "", instagramUrl: "", twitterUrl: "", linkedinUrl: "",
     promoVideoUrl: "", promoPhoto1Url: "", promoPhoto2Url: "", promoPhoto3Url: "", promoPhoto4Url: "", promoPhoto5Url: "",
@@ -146,6 +146,12 @@ export default function AdminDashboard() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    const submitData = { ...formData };
+    if (submitData.category === "Other" && submitData.customCategory) {
+      submitData.category = submitData.customCategory;
+    }
+    delete (submitData as any).customCategory;
+
     const method = editingId ? "PUT" : "POST";
     const url = editingId ? `/api/businesses/${editingId}` : "/api/businesses";
 
@@ -154,7 +160,7 @@ export default function AdminDashboard() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(submitData)
     })
     .then(async res => {
       if (!res.ok) {
@@ -209,8 +215,29 @@ export default function AdminDashboard() {
     .catch(err => console.error(err));
   };
 
+  const STANDARD_CATEGORIES = [
+    "Agriculture", "Arts & Crafts", "Automotive", "Automotive (Auto)", "Aviation", "Beauty", "Beauty & Wellness", "Community & Religion", 
+    "Construction & Contracting", "Digital Marketing", "E-Commerce", "Education", "Energy and Power", "Engineering and Construction", 
+    "Entertainment", "Entertainment & Recreation", "Environmental", "Event Management", "Fashion", "Finance", "Finance & Insurance", 
+    "Food & Beverage", "Food & Drink", "Government", "Government & Public Sector", "Health & Medical", "Healthcare", "Home & Property", 
+    "Home Services & Trades", "Hospitality", "Industrial", "Industrial & Manufacturing", "Information & Communications Technology (ICT)", 
+    "Legal", "Legal & Professional", "Lodging & Travel", "Logistics", "Manufacturing", "Marine & Shipping", "Marketing", "Marketing & Media", 
+    "Media & Entertainment", "Mining", "Non-Profit", "Oil and Gas", "Printing and Publishing", "Professional Services", "Real Estate", 
+    "Real Estate & Property", "Retail", "Retail & Shopping", "Security Services", "Sports & Fitness", "Technology", "Technology & IT", 
+    "Telecommunications", "Transportation & Logistics"
+  ];
+
   const handleEdit = (business: Business) => {
     setEditingId(business.id);
+    
+    let initialCategory = business.category || "";
+    let initialCustomCategory = "";
+    
+    if (initialCategory && !STANDARD_CATEGORIES.includes(initialCategory)) {
+      initialCustomCategory = initialCategory;
+      initialCategory = "Other";
+    }
+
     setFormData({
       name: business.name || "",
       slogan: business.slogan || "",
@@ -218,7 +245,8 @@ export default function AdminDashboard() {
       certificateOfIncorporationUrl: business.certificateOfIncorporationUrl || "",
       companyProfileUrl: business.companyProfileUrl || "",
       rcNumber: business.rcNumber || "",
-      category: business.category || "",
+      category: initialCategory,
+      customCategory: initialCustomCategory,
       aboutUs: business.aboutUs || "",
       services: business.services || "",
       phone: business.phone || "",
@@ -413,6 +441,17 @@ export default function AdminDashboard() {
                   <option value="Transportation & Logistics">Transportation & Logistics</option>
                   <option value="Other">Other</option>
                 </select>
+                {formData.category === "Other" && (
+                  <input 
+                    required 
+                    type="text" 
+                    name="customCategory" 
+                    value={formData.customCategory} 
+                    onChange={handleChange} 
+                    className="w-full px-4 py-2.5 mt-4 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none" 
+                    placeholder="Please specify your business category" 
+                  />
+                )}
               </div>
 
               <div className="col-span-1 md:col-span-2">

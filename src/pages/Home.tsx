@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Search, BadgeCheck, Briefcase } from "lucide-react";
 import type { Business } from "../types";
@@ -6,8 +6,15 @@ import { Helmet } from "react-helmet-async";
 
 export default function Home() {
   const [latestBusinesses, setLatestBusinesses] = useState<Business[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    // Attempt to force video play for mobile browsers
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(err => console.log("Video autoplay prevented:", err));
+    }
+
     fetch("/api/businesses/latest")
       .then(res => res.json())
       .then(data => {
@@ -56,6 +63,7 @@ export default function Home() {
             <div className="relative mt-8 lg:mt-0 flex justify-center">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-100 max-w-sm w-full bg-green-900 aspect-[4/3] flex items-center justify-center">
                 <video 
+                  ref={videoRef}
                   autoPlay
                   loop
                   muted

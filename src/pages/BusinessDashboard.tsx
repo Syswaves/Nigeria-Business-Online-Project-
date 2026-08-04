@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { LogOut, Save, Upload, Briefcase, Phone, Hash } from "lucide-react";
+import { LogOut, Save, Upload, Briefcase, Phone, Hash, ArrowLeft } from "lucide-react";
 import type { Business } from "../types";
 
 export default function BusinessDashboard() {
@@ -10,6 +10,10 @@ export default function BusinessDashboard() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMessage, setForgotMessage] = useState({ type: "", text: "" });
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +35,32 @@ export default function BusinessDashboard() {
     })
     .catch((err) => {
       setError(err.message);
+    })
+    .finally(() => {
+      setIsSubmitting(false);
+    });
+  };
+
+  const handleForgotPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setForgotMessage({ type: "", text: "" });
+
+    fetch("/api/business/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: forgotEmail })
+    })
+    .then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to process request");
+      }
+      setForgotMessage({ type: "success", text: "If an account with that email exists, login details have been sent." });
+      setForgotEmail("");
+    })
+    .catch((err) => {
+      setForgotMessage({ type: "error", text: err.message });
     })
     .finally(() => {
       setIsSubmitting(false);
@@ -92,6 +122,52 @@ export default function BusinessDashboard() {
   };
 
   if (!isAuthenticated || !business) {
+    if (showForgotPassword) {
+      return (
+        <div className="max-w-md mx-auto px-4 py-32">
+          <Helmet>
+            <title>Forgot Password | Nigeria Business Online</title>
+          </Helmet>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <button 
+              onClick={() => setShowForgotPassword(false)}
+              className="flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-900 mb-6"
+            >
+              <ArrowLeft size={16} /> Back to login
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Forgot Password</h1>
+            <p className="text-gray-600 mb-6 text-sm">Enter the email address associated with your business account. We'll send your login details if an account exists.</p>
+            
+            {forgotMessage.text && (
+              <div className={`mb-4 text-sm p-3 rounded-lg ${forgotMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                {forgotMessage.text}
+              </div>
+            )}
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input 
+                  type="email" 
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 outline-none"
+                  required
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+              >
+                {isSubmitting ? "Sending..." : "Send Login Details"}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-md mx-auto px-4 py-32">
         <Helmet>
@@ -112,7 +188,16 @@ export default function BusinessDashboard() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <button 
+                  type="button" 
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm font-medium text-green-600 hover:text-green-700"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <input 
                 type="password" 
                 value={loginPassword}

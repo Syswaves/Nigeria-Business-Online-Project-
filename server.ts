@@ -53,7 +53,7 @@ const saveSmtpConfig = () => {
 };
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -127,7 +127,7 @@ if (supabaseUrl && supabaseUrl.startsWith("http") && supabaseKey) {
 
 // In-memory fallback store
 let businesses: Business[] = [];
-const BUSINESSES_FILE = path.join(process.cwd(), "businesses.json");
+const BUSINESSES_FILE = process.env.DATA_FILE_PATH || path.join(process.cwd(), "businesses.json");
 
 if (fs.existsSync(BUSINESSES_FILE)) {
   try {
@@ -399,6 +399,61 @@ app.post("/api/business/login", async (req, res) => {
   }
 });
 
+app.post("/api/business/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  let business;
+  if (supabase) {
+    const { data } = await supabase.from("businesses").select("*").eq("email", email).single();
+    business = data;
+  } else {
+    business = businesses.find(b => b.email === email);
+  }
+
+  if (business && smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpConfig.host,
+        port: parseInt(smtpConfig.port || "587"),
+        secure: smtpConfig.port === "465",
+        auth: {
+          user: smtpConfig.user,
+          pass: smtpConfig.pass,
+        },
+      });
+
+      const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+
+      await transporter.sendMail({
+        from: smtpConfig.fromEmail || smtpConfig.user,
+        to: business.email,
+        subject: "Your Business Dashboard Login Details",
+        html: `
+          <h2>Login Details Recovery</h2>
+          <p>You requested to recover your login details for your Nigeria Business Online dashboard.</p>
+          <br/>
+          <p><strong>Dashboard Login Details:</strong></p>
+          <ul>
+            <li><strong>Username:</strong> ${business.username}</li>
+            <li><strong>Password:</strong> ${business.password}</li>
+          </ul>
+          <p>Login URL: <a href="${baseUrl}/business-dashboard">${baseUrl}/business-dashboard</a></p>
+          <br/>
+          <p>If you did not request this, please ignore this email.</p>
+        `
+      });
+    } catch (err) {
+      console.error("Failed to send forgot password email:", err);
+    }
+  }
+
+  // Always return success to prevent email enumeration
+  return res.json({ success: true });
+});
+
 app.put("/api/businesses/:id", async (req, res) => {
   const updatedData = { ...req.body };
   delete updatedData.id;
@@ -561,7 +616,9 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    // Under some environments like cPanel/Passenger, process.cwd() might not point to the project root.
+    // Since this runs from dist/server.cjs in production, __dirname is the dist/ directory.
+    const distPath = __dirname;
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
