@@ -295,6 +295,9 @@ export default function AdminDashboard() {
           >
             {showSettingsForm ? "Close Settings" : "SMTP Settings"}
           </button>
+          <a href="/deploy.zip" target="_blank" download className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium transition-colors">
+            Download Deploy ZIP
+          </a>
           <button 
             onClick={() => {
               if (showAddForm) {
