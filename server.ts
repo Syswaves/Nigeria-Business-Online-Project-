@@ -57,6 +57,19 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.get(['/deploy.zip', '/api/download-deploy'], (req, res) => {
+  const file = path.join(process.cwd(), 'public', 'deploy.zip');
+  if (fs.existsSync(file)) {
+    // Set headers to force download
+    res.setHeader('Content-Disposition', 'attachment; filename="deploy.zip"');
+    res.setHeader('Content-Type', 'application/zip');
+    const fileStream = fs.createReadStream(file);
+    fileStream.pipe(res);
+  } else {
+    res.status(404).send('Deployment package not found. Please wait or trigger a new build.');
+  }
+});
+
 
 app.get("/api/admin/smtp", (req, res) => {
   res.json({
@@ -83,9 +96,13 @@ interface Business {
   id: string;
   slug?: string;
   name: string;
+  slogan?: string;
   logoUrl?: string;
+  certificateOfIncorporationUrl?: string;
+  companyProfileUrl?: string;
   rcNumber: string;
   category: string;
+  aboutUs?: string;
   services: string;
   phone: string;
   location: string;
@@ -129,13 +146,20 @@ if (supabaseUrl && supabaseUrl.startsWith("http") && supabaseKey) {
 let businesses: Business[] = [];
 const BUSINESSES_FILE = process.env.DATA_FILE_PATH || path.join(process.cwd(), "businesses.json");
 
-if (fs.existsSync(BUSINESSES_FILE)) {
-  try {
-    businesses = JSON.parse(fs.readFileSync(BUSINESSES_FILE, "utf-8"));
-  } catch (err) {
-    console.error("Error reading businesses.json", err);
+const loadBusinesses = () => {
+  if (fs.existsSync(BUSINESSES_FILE)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(BUSINESSES_FILE, "utf-8"));
+      if (data && data.length > 0) {
+        businesses = data;
+      }
+    } catch (err) {
+      console.error("Error reading businesses.json", err);
+    }
   }
-}
+};
+
+loadBusinesses();
 
 if (businesses.length === 0) {
   businesses = [
@@ -305,6 +329,7 @@ app.post("/api/businesses", async (req, res) => {
   
   // Basic collision check for local memory
   let counter = 1;
+  
   while (businesses.some(b => b.slug === generatedSlug)) {
     generatedSlug = `${baseSlug}-${counter}`;
     counter++;
@@ -331,6 +356,7 @@ app.post("/api/businesses", async (req, res) => {
       ...newBusiness,
       id: Math.random().toString(36).substr(2, 9),
     };
+    
     businesses.push(memoryBusiness);
     saveBusinesses();
     savedBusiness = memoryBusiness;
@@ -339,22 +365,118 @@ app.post("/api/businesses", async (req, res) => {
   // Send actual email notification if SMTP is configured
   if (smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
     try {
+      console.log("Creating transport with config:", { host: smtpConfig.host, port: smtpConfig.port, secure: String(smtpConfig.port) === "465" });
       const transporter = nodemailer.createTransport({
         host: smtpConfig.host,
         port: parseInt(smtpConfig.port || "587"),
-        secure: smtpConfig.port === "465",
+        secure: String(smtpConfig.port) === "465",
+        tls: {
+          rejectUnauthorized: false
+        },
+        debug: true,
+        logger: true,
         auth: {
           user: smtpConfig.user,
           pass: smtpConfig.pass,
         },
       });
 
+            const attachments: any[] = [];
+      const addAttachment = (url: string | undefined, filename: string) => {
+        if (url && url.startsWith('data:')) {
+          const match = url.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) {
+            let ext = match[1].split('/')[1] || 'bin';
+            if (ext === 'jpeg') ext = 'jpg';
+            if (ext === 'vnd.openxmlformats-officedocument.wordprocessingml.document') ext = 'docx';
+            if (ext === 'msword') ext = 'doc';
+            attachments.push({
+              filename: `${filename}.${ext}`,
+              content: match[2],
+              encoding: 'base64'
+            });
+          }
+        } else if (url) {
+          attachments.push({
+             filename: filename,
+             path: url
+          });
+        }
+      };
+      
+      addAttachment(savedBusiness.logoUrl, 'logo');
+      addAttachment(savedBusiness.certificateOfIncorporationUrl, 'certificate');
+      addAttachment(savedBusiness.companyProfileUrl, 'company-profile');
+      addAttachment(savedBusiness.promoVideoUrl, 'promo-video');
+      addAttachment(savedBusiness.promoPhoto1Url, 'promo-photo-1');
+      addAttachment(savedBusiness.promoPhoto2Url, 'promo-photo-2');
+      addAttachment(savedBusiness.promoPhoto3Url, 'promo-photo-3');
+      addAttachment(savedBusiness.promoPhoto4Url, 'promo-photo-4');
+      addAttachment(savedBusiness.promoPhoto5Url, 'promo-photo-5');
+      
       await transporter.sendMail({
         from: smtpConfig.fromEmail || `"Nigeria Business Online" <${smtpConfig.user}>`,
         to: "businessprofiling@nigeriabusinessonline.com",
+        cc: "nigeriabusinessonlineproject@gmail.com",
         subject: `New Business Profiling Submission - ${savedBusiness.name}`,
-        text: `A new business has been submitted for profiling.\n\nCompany Name: ${savedBusiness.name}\nEmail: ${savedBusiness.email}\nPhone: ${savedBusiness.phone}\nCategory: ${savedBusiness.category}\nLocation: ${savedBusiness.location}\n\nPlease check the admin dashboard for more details.`,
-        html: `<h3>New Business Profiling Submission</h3><p>A new business has been submitted for profiling.</p><ul><li><strong>Company Name:</strong> ${savedBusiness.name}</li><li><strong>Email:</strong> ${savedBusiness.email}</li><li><strong>Phone:</strong> ${savedBusiness.phone}</li><li><strong>Category:</strong> ${savedBusiness.category}</li><li><strong>Location:</strong> ${savedBusiness.location}</li></ul><p>Please check the admin dashboard for more details.</p>`
+        attachments,
+        text: `A new business has been submitted for profiling.
+
+` +
+          `Company Name: ${savedBusiness.name || 'N/A'}
+` +
+          `RC Number: ${savedBusiness.rcNumber || 'N/A'}
+` +
+          `Category: ${savedBusiness.category || 'N/A'}
+` +
+          `Email: ${savedBusiness.email || 'N/A'}
+` +
+          `Phone: ${savedBusiness.phone || 'N/A'}
+` +
+          `WhatsApp: ${savedBusiness.whatsapp || 'N/A'}
+` +
+          `Location: ${savedBusiness.location || 'N/A'}
+` +
+          `Website: ${savedBusiness.website || 'N/A'}
+` +
+          `Slogan: ${savedBusiness.slogan || 'N/A'}
+` +
+          `About Us: ${savedBusiness.aboutUs || 'N/A'}
+` +
+          `Services: ${savedBusiness.services || 'N/A'}
+` +
+          `Facebook: ${savedBusiness.facebookUrl || 'N/A'}
+` +
+          `Instagram: ${savedBusiness.instagramUrl || 'N/A'}
+` +
+          `Twitter: ${savedBusiness.twitterUrl || 'N/A'}
+` +
+          `LinkedIn: ${savedBusiness.linkedinUrl || 'N/A'}
+
+` +
+          `Please check the admin dashboard for more details and see the attached files.`,
+        html: `<h3>New Business Profiling Submission</h3>
+<p>A new business has been submitted for profiling.</p>
+<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 800px;">
+  <tr><td><strong>Company Name:</strong></td><td>${savedBusiness.name || 'N/A'}</td></tr>
+  <tr><td><strong>RC Number:</strong></td><td>${savedBusiness.rcNumber || 'N/A'}</td></tr>
+  <tr><td><strong>Category:</strong></td><td>${savedBusiness.category || 'N/A'}</td></tr>
+  <tr><td><strong>Email:</strong></td><td>${savedBusiness.email || 'N/A'}</td></tr>
+  <tr><td><strong>Phone:</strong></td><td>${savedBusiness.phone || 'N/A'}</td></tr>
+  <tr><td><strong>WhatsApp:</strong></td><td>${savedBusiness.whatsapp || 'N/A'}</td></tr>
+  <tr><td><strong>Location:</strong></td><td>${savedBusiness.location || 'N/A'}</td></tr>
+  <tr><td><strong>Website:</strong></td><td>${savedBusiness.website || 'N/A'}</td></tr>
+  <tr><td><strong>Slogan:</strong></td><td>${savedBusiness.slogan || 'N/A'}</td></tr>
+  <tr><td><strong>About Us:</strong></td><td>${savedBusiness.aboutUs || 'N/A'}</td></tr>
+  <tr><td><strong>Services:</strong></td><td>${savedBusiness.services || 'N/A'}</td></tr>
+  <tr><td><strong>Facebook:</strong></td><td>${savedBusiness.facebookUrl || 'N/A'}</td></tr>
+  <tr><td><strong>Instagram:</strong></td><td>${savedBusiness.instagramUrl || 'N/A'}</td></tr>
+  <tr><td><strong>Twitter:</strong></td><td>${savedBusiness.twitterUrl || 'N/A'}</td></tr>
+  <tr><td><strong>LinkedIn:</strong></td><td>${savedBusiness.linkedinUrl || 'N/A'}</td></tr>
+</table>
+<h4>Uploaded Documents</h4>
+<p>${attachments.length > 0 ? attachments.length + " file(s) have been attached to this email." : "No files were uploaded."}</p>
+<p>Please check the admin dashboard for more details.</p>`
       });
       console.log(`[EMAIL DISPATCH] Email successfully sent to businessprofiling@nigeriabusinessonline.com`);
     } catch (err) {
@@ -415,10 +537,16 @@ app.post("/api/business/forgot-password", async (req, res) => {
 
   if (business && smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
     try {
+      console.log("Creating transport with config:", { host: smtpConfig.host, port: smtpConfig.port, secure: String(smtpConfig.port) === "465" });
       const transporter = nodemailer.createTransport({
         host: smtpConfig.host,
         port: parseInt(smtpConfig.port || "587"),
-        secure: smtpConfig.port === "465",
+        secure: String(smtpConfig.port) === "465",
+        tls: {
+          rejectUnauthorized: false
+        },
+        debug: true,
+        logger: true,
         auth: {
           user: smtpConfig.user,
           pass: smtpConfig.pass,
@@ -463,10 +591,16 @@ app.put("/api/businesses/:id", async (req, res) => {
     // Only if SMTP is configured
     if (smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
       try {
-        const transporter = nodemailer.createTransport({
+        console.log("Creating transport with config:", { host: smtpConfig.host, port: smtpConfig.port, secure: String(smtpConfig.port) === "465" });
+      const transporter = nodemailer.createTransport({
           host: smtpConfig.host,
           port: parseInt(smtpConfig.port || "587"),
-          secure: smtpConfig.port === "465",
+          secure: String(smtpConfig.port) === "465",
+        tls: {
+          rejectUnauthorized: false
+        },
+        debug: true,
+        logger: true,
           auth: {
             user: smtpConfig.user,
             pass: smtpConfig.pass,
@@ -512,6 +646,7 @@ app.put("/api/businesses/:id", async (req, res) => {
   }
 
   // Fallback memory
+  
   const index = businesses.findIndex(b => b.id === req.params.id);
   if (index !== -1) {
     businesses[index] = { ...businesses[index], ...updatedData };
@@ -533,6 +668,7 @@ app.delete("/api/businesses/:id", async (req, res) => {
   }
 
   // Fallback memory
+  
   const initialLength = businesses.length;
   businesses = businesses.filter(b => b.id !== req.params.id);
   if (businesses.length < initialLength) {
@@ -551,10 +687,16 @@ const sendExpirationReminders = async () => {
   }
   
   try {
-    const transporter = nodemailer.createTransport({
+    console.log("Creating transport with config:", { host: smtpConfig.host, port: smtpConfig.port, secure: String(smtpConfig.port) === "465" });
+      const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: parseInt(smtpConfig.port || "587"),
-      secure: smtpConfig.port === "465",
+      secure: String(smtpConfig.port) === "465",
+        tls: {
+          rejectUnauthorized: false
+        },
+        debug: true,
+        logger: true,
       auth: {
         user: smtpConfig.user,
         pass: smtpConfig.pass,
@@ -563,15 +705,15 @@ const sendExpirationReminders = async () => {
 
     const now = Date.now();
     
-    let allBusinesses: Business[] = [];
+    let businesses: Business[] = [];
     if (supabase) {
       const { data } = await supabase.from("businesses").select("*").eq("verified", true);
-      if (data) allBusinesses = data;
+      if (data) businesses = data;
     } else {
-      allBusinesses = businesses.filter(b => b.verified);
+      businesses = businesses.filter(b => b.verified);
     }
     
-    for (const b of allBusinesses) {
+    for (const b of businesses) {
       if (!b.verifiedAt) continue;
       
       const expirationDate = b.verifiedAt + 365 * 24 * 60 * 60 * 1000;
@@ -625,8 +767,10 @@ async function startServer() {
     });
   }
 
+  
+
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}\nData file path: ${BUSINESSES_FILE}`);
   });
 }
 
